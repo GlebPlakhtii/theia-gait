@@ -1,4 +1,16 @@
-# Theia — pose-based movement analysis
+<p align="center"><img src=".github/icon.svg" width="96" height="96" alt="Theia app icon"></p>
+
+<h1 align="center">Theia</h1>
+
+<p align="center"><b>Stay strong, stay safe: a camera coach against injury and bone loss. On Earth and in space.</b></p>
+
+<p align="center">
+  <a href="https://theia-app.pages.dev">Live demo</a> ·
+  <a href="https://theia-app.pages.dev/space">Space</a> ·
+  <a href="https://theia-app.pages.dev/earth">Earth</a>
+</p>
+
+## Pose-based movement analysis
 
 Research code for extracting body poses from RGB video, measuring movement, learning unusual gait patterns, and visualizing the body regions involved. The project explores walking, running, ground squats, and astronaut exercise footage.
 
