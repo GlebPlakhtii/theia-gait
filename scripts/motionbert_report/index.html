@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Theia · MotionBERT progress</title><link rel="stylesheet" href="report.css">
+<main><header><small>THEIA / MOVEMENT RESEARCH</small><h1>MotionBERT progress</h1><p id="headline">Reading live pipeline status…</p><p class="notice">The current pose run finishes first. Fine-tuning uses the existing videos, extracted poses and automatic measurement labels.</p></header>
+<section><h2>Current processing</h2><div id="summary"></div><p id="pose"></p><p id="stage"></p><p id="training"></p><p id="freshness"></p></section>
+<section><h2>Experiment outputs</h2><p id="result">The final report will appear after the data are ready.</p><p><a href="/gait_metrics/">Current pose and measurement review</a> · <a href="pipeline_status.json">Pipeline status JSON</a></p><p class="notice">Automatic labels identify deviations from the available reference measurements. They do not certify clinical form or prescribe prosthetic adjustments. Unsupported targets stay unavailable.</p></section>
+<section><h2>Deadline schedule</h2><p>Training runs for at most two hours and stops taking training batches by 07:30 Kyiv on 15 November. Evaluation and report preparation follow. Delivery target: 08:30, ahead of the 09:00 deadline. These are targets; the page reports actual completion separately.</p></section></main>
+<script>
+'use strict';
+const el=id=>document.getElementById(id),kyiv=s=>s?new Date(s).toLocaleString('en-GB',{timeZone:'Europe/Kyiv',hour12:false}):'not available';
+async function read(path){try{const r=await fetch(path,{cache:'no-store'});return r.ok?await r.json():null}catch{return null}}
+async function refresh(){const [p,s,t,r]=await Promise.all([read('pipeline_status.json'),read('/gait_metrics/production_status.json'),read('training_status.json'),read('report_status.json')]);
+ const names={waiting_for_existing_pose_run:'Queued — waiting for the current pose run',running:'Experiment is running',complete:'Fine-tuning and evaluation finished',failed:'Pipeline needs attention',deadline_window_insufficient:'Current pose run preserved; insufficient time for the planned training'};
+ el('headline').textContent=p?(names[p.status]||p.status):'Controller status is not yet available';
+ el('summary').replaceChildren();for(const [name,value]of [['Pose jobs',s?`${s.completed_clips||0} / ${s.total_jobs}`:'Unavailable'],['Frames processed',s?.completed_frames?.toLocaleString()||'Unavailable'],['Encoder update steps',t?.encoder_optimizer_steps??0]]){const box=document.createElement('div');box.className='stat';const strong=document.createElement('strong');strong.textContent=value;box.append(strong,document.createTextNode(name));el('summary').append(box)}
+ el('pose').textContent=s?.phase==='pose_complete'?'Pose inference finished.':`Pose inference estimate: ${kyiv(s?.estimated_finish_utc)} Kyiv. The estimate changes with video throughput.`;
+ el('stage').textContent=p?.message?`${p.error||'Error'}: ${p.message}`:p?.step?`Active step: ${p.step.split('/').pop()}`:p?.note||'Waiting for a controller update.';
+ el('training').textContent=t?`Training: ${t.status}${t.phase?' · '+t.phase.replaceAll('_',' '):''}${t.epoch?' · epoch '+t.epoch:''}${t.windows_per_second?' · '+t.windows_per_second.toFixed(1)+' windows/s':''}${t.error?' · '+t.message:''}`:'GPU fine-tuning has not started.';
+ const stale=p?.updated_at&&Date.now()-Date.parse(p.updated_at)>120000&&p.status==='waiting_for_existing_pose_run';
+ el('freshness').textContent=`Controller update: ${kyiv(p?.updated_at)} Kyiv.${stale?' Update is stale; current controller activity is unverified.':''} This page refreshes every 30 seconds.`;
+ el('result').replaceChildren();if(r){const a=document.createElement('a');a.href='report.html';a.textContent=r.status==='results_available'?'Open fine-tuned results and videos':'Open prepared data and report status';el('result').append(a)}else el('result').textContent='The final report will appear after the completed data are frozen.';
+}refresh();setInterval(refresh,30000);
+</script></html>
